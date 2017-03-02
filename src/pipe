@@ -1,0 +1,21 @@
+#!/bin/bash
+# history -r ~/.seb_history
+
+self=`basename "$0"`
+
+declare -a inputs
+
+input_index=0
+
+while read line; do
+  echo "$line"
+  inputs[input_index]=$line
+  input_index=$((input_index + 1))
+done
+
+read -e -p $'\e[32m>>\e[0m ' response </dev/tty
+if [ ! -z "${response}" ]; then
+ #history -s "$response"
+ #history -w ~/.seb_history
+  printf '%s\n' "${inputs[@]}" | eval "$response" | $self
+fi
