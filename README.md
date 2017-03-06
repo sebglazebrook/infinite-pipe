@@ -57,3 +57,11 @@ ps -ef | pipe
 Now you will see your output and be have a prompt where you can either enter in a new command to act on the output to press enter to quit.
 
 Easy!
+
+## TODO
+
+- Allow users to go back through a pipe chain if they make a mistake
+- Allow saving of command to their history (either each command or full command)
+- Make sure large data piped through does not make the program slow
+- Use the user's PS1/PS2 to make the prompt more bash like
+- Allow the user to write a new command without using the previous commands stdin
