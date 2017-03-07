@@ -65,4 +65,4 @@ Easy!
 - Make sure large data piped through does not make the program slow
 - Use the user's PS1/PS2 to make the prompt more bash like
 - Allow the user to write a new command without using the previous commands stdin
-- Handle no success commands
+- Handle non success commands
