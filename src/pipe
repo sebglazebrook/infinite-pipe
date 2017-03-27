@@ -13,9 +13,27 @@ while read line; do
   input_index=$((input_index + 1))
 done
 
+# store stdout
+data_dir="/tmp/.infinite-pipe.d/"
+mkdir -p $data_dir
+utc=$(date +"%s")
+filename="${data_dir}/$utc"
+printf '%s\n' "${inputs[@]}" > $filename
+
+
 read -e -p $'\e[32m>>\e[0m ' response </dev/tty
-if [ ! -z "${response}" ]; then
- #history -s "$response"
- #history -w ~/.seb_history
-  printf '%s\n' "${inputs[@]}" | eval "$response" | $self
+if [ -n "${response}" ]; then # inverse -n  => of the length if "STRING" is non-zero.
+  if [ "${response}" == "back" ]; then
+    echo "hello world"
+  else
+    printf '%s\n' "${inputs[@]}" | eval "$response" | $self
+  fi
 fi
+
+# read command line args
+# start program
+# capture any piped input ( on thread?? )
+# print out a prompt and wait for the user's command
+# parse the command
+# if they want to exit -> exit and append to history if set
+# otherwise run the command sending in the piped input to the command unless they ask otherwise
