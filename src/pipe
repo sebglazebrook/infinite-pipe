@@ -14,20 +14,25 @@ while read line; do
 done
 
 # store stdout
-data_dir="/tmp/.infinite-pipe.d/"
+data_dir="/tmp/.infinite-pipe.d"
 mkdir -p $data_dir
 utc=$(date +"%s")
 filename="${data_dir}/$utc"
 printf '%s\n' "${inputs[@]}" > $filename
 
-
+# read user's input
 read -e -p $'\e[32m>>\e[0m ' response </dev/tty
 if [ -n "${response}" ]; then # inverse -n  => of the length if "STRING" is non-zero.
+
+  # check if the user want to go back
   if [ "${response}" == "back" ]; then
-    echo "hello world"
+    rm $filename # delete current stdout
+    previous_stdout="${data_dir}/$(ls -a "${data_dir}" | tail -n 1)"
+    cat $previous_stdout | $self # send through old stdout to pipe
   else
-    printf '%s\n' "${inputs[@]}" | eval "$response" | $self
+    cat $filename | eval "$response" | $self # send through stdout to the next command
   fi
+
 fi
 
 # read command line args
