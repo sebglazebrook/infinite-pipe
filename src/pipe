@@ -2,6 +2,10 @@
 
 self=`basename "$0"`
 
+# Set up data dir
+data_dir="/tmp/.infinite-pipe.d"
+mkdir -p $data_dir
+
 # set up session history
 session_history="/tmp/.infinite-pipe.d/session_history"
 history -r $session_history
@@ -35,8 +39,6 @@ else
   done
 
   # store stdout
-  data_dir="/tmp/.infinite-pipe.d"
-  mkdir -p $data_dir
   utc=$(date +"%s")
   filename="${data_dir}/${utc}.stdout"
   printf '%s\n' "${inputs[@]}" > $filename
