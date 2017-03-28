@@ -4,3 +4,5 @@
 
 release:
   command: ./scripts/release
+link-bin:
+  command: sudo ln -s "${PWD}/src/infinite-pipe" /usr/local/bin/

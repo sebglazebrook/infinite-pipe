@@ -1,5 +1,11 @@
 #!/bin/bash
 
+cleanup() {
+  rm -f $resultant_command_history      # reset the resultant command history
+  rm -f /tmp/.infinite-pipe.d/*.stdout  # delete all the previous stdout histories
+}
+trap cleanup EXIT
+
 self=`basename "$0"`
 
 # Set up data dir
@@ -71,8 +77,7 @@ else
       history -s "$resultant_command"
       unset history
 
-      rm $resultant_command_history # reset the resultant command history
-      rm /tmp/.infinite-pipe.d/*.stdout # delete all the previous stdout histories
+      cleanup
 
       $self # start a new infinite pipe
 
