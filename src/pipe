@@ -1,5 +1,7 @@
 #!/bin/bash
 
+self=`basename "$0"`
+
 # set up session history
 session_history="/tmp/.infinite-pipe.d/session_history"
 history -r $session_history
@@ -9,73 +11,86 @@ touch $session_history
 resultant_command_history="/tmp/.infinite-pipe.d/result_command_history"
 touch $resultant_command_history
 
-self=`basename "$0"`
+argument="$@"
 
-declare -a inputs
-
-input_index=0
-
-while read line; do
-  echo "$line"
-  inputs[input_index]=$line
-  input_index=$((input_index + 1))
-done
-
-# store stdout
-data_dir="/tmp/.infinite-pipe.d"
-mkdir -p $data_dir
-utc=$(date +"%s")
-filename="${data_dir}/${utc}.stdout"
-printf '%s\n' "${inputs[@]}" > $filename
-
-
-# read user's input
-read -e -p $'\e[32m>>\e[0m ' response </dev/tty
-if [ -n "${response}" ]; then # inverse -n  => of the length if "STRING" is non-zero.
+if [ -n "${argument}" ]; then # inverse -n  => of the length if "STRING" is non-zero.
+  # here we assume it's your first time
 
   # update session history
-  history -s "$response"
+  history -s "$argument"
   history -w $session_history
 
-  # check if the user want to go back
-  if [ "${response}" == "back" ]; then
+  printf "${argument}\n" >> $resultant_command_history # add command to output history
 
-    # remove last command in output history
-    sed \$d --in-place $resultant_command_history
+  eval "$argument" | $self
+else
+  declare -a inputs
 
-    rm $filename # delete current stdout
-    previous_stdout="$(ls -a "${data_dir}"/*.stdout | tail -n 1 )"
-    cat $previous_stdout | $self # send through old stdout to pipe
+  input_index=0
 
-  elif  [ "${response}" == "break" ]; then
+  while read line; do
+    echo "$line"
+    inputs[input_index]=$line
+    input_index=$((input_index + 1))
+  done
 
+  # store stdout
+  data_dir="/tmp/.infinite-pipe.d"
+  mkdir -p $data_dir
+  utc=$(date +"%s")
+  filename="${data_dir}/${utc}.stdout"
+  printf '%s\n' "${inputs[@]}" > $filename
+
+
+  # read user's input
+  read -e -p $'\e[32m>>\e[0m ' response </dev/tty
+  if [ -n "${response}" ]; then # inverse -n  => of the length if "STRING" is non-zero.
+
+    # update session history
+    history -s "$response"
+    history -w $session_history
+
+    # check if the user want to go back
+    if [ "${response}" == "back" ]; then
+
+      # remove last command in output history
+      sed \$d --in-place $resultant_command_history
+
+      rm $filename # delete current stdout
+      previous_stdout="$(ls -a "${data_dir}"/*.stdout | tail -n 1 )"
+      cat $previous_stdout | $self # send through old stdout to pipe
+
+    elif  [ "${response}" == "break" ]; then
+
+
+      resultant_command=$(cat $resultant_command_history | tr "\n" '|' | sed 's/|/ | /g;s/| $/ /')
+      HISTFILE=~/.bash_history
+      set -o history
+      history -s "$resultant_command"
+      unset history
+
+      rm $resultant_command_history # reset the resultant command history
+      rm /tmp/.infinite-pipe.d/*.stdout # delete all the previous stdout histories
+
+      $self # start a new infinite pipe
+
+    else
+
+      step_one=$(cat $filename | eval "$response")
+      if [ $? -eq 0  ]; then
+        printf "${response}\n" >> $resultant_command_history # add command to output history
+        echo "$step_one" | $self # send through stdout to the next command
+      else
+        cat $filename | $self
+      fi
+    fi
+
+  else
 
     resultant_command=$(cat $resultant_command_history | tr "\n" '|' | sed 's/|/ | /g;s/| $/ /')
     HISTFILE=~/.bash_history
     set -o history
     history -s "$resultant_command"
-    unset history
-
-    rm $resultant_command_history # reset the resultant command history
-    rm /tmp/.infinite-pipe.d/*.stdout # delete all the previous stdout histories
-
-    $self # start a new infinite pipe
-
-  else
-
-    step_one=$(cat $filename | eval "$response")
-    if [ $? -eq 0  ]; then
-      printf "${response}\n" >> $resultant_command_history # add command to output history
-      echo "$step_one" | $self # send through stdout to the next command
-    else
-      cat $filename | $self
-    fi
   fi
 
-else
-
-  resultant_command=$(cat $resultant_command_history | tr "\n" '|' | sed 's/|/ | /g;s/| $/ /')
-  HISTFILE=~/.bash_history
-  set -o history
-  history -s "$resultant_command"
 fi
