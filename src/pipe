@@ -1,5 +1,11 @@
 #!/bin/bash
-# history -r ~/.seb_history
+
+# set up session history
+session_history="/tmp/.infinite-pipe.d/session_history"
+history -r $session_history
+
+# set up resultant command history
+resultant_command_history="/tmp/.infinite-pipe.d/result_command_history"
 
 self=`basename "$0"`
 
@@ -17,28 +23,39 @@ done
 data_dir="/tmp/.infinite-pipe.d"
 mkdir -p $data_dir
 utc=$(date +"%s")
-filename="${data_dir}/$utc"
+filename="${data_dir}/${utc}.stdout"
 printf '%s\n' "${inputs[@]}" > $filename
+
 
 # read user's input
 read -e -p $'\e[32m>>\e[0m ' response </dev/tty
 if [ -n "${response}" ]; then # inverse -n  => of the length if "STRING" is non-zero.
 
+  # update session history
+  history -s "$response"
+  history -w $session_history
+
   # check if the user want to go back
   if [ "${response}" == "back" ]; then
+
+    # remove last command in output history
+    sed \$d --in-place $resultant_command_history
+
     rm $filename # delete current stdout
-    previous_stdout="${data_dir}/$(ls -a "${data_dir}" | tail -n 1)"
+    previous_stdout="$(ls -a "${data_dir}"/*.stdout | tail -n 1)"
     cat $previous_stdout | $self # send through old stdout to pipe
+
   else
+
+    printf "${response}\n" >> $resultant_command_history # add command to output history
+
     cat $filename | eval "$response" | $self # send through stdout to the next command
   fi
 
-fi
+else
 
-# read command line args
-# start program
-# capture any piped input ( on thread?? )
-# print out a prompt and wait for the user's command
-# parse the command
-# if they want to exit -> exit and append to history if set
-# otherwise run the command sending in the piped input to the command unless they ask otherwise
+  resultant_command=$(cat $resultant_command_history | tr "\n" '|' | sed 's/|/ | /g;s/| $/ /')
+  HISTFILE=~/.bash_history
+  set -o history
+  history -s "$resultant_command"
+fi
