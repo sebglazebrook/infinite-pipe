@@ -42,14 +42,19 @@ if [ -n "${response}" ]; then # inverse -n  => of the length if "STRING" is non-
     sed \$d --in-place $resultant_command_history
 
     rm $filename # delete current stdout
-    previous_stdout="$(ls -a "${data_dir}"/*.stdout | tail -n 1)"
+    previous_stdout="$(ls -a "${data_dir}"/*.stdout | tail -n 1 )"
     cat $previous_stdout | $self # send through old stdout to pipe
 
   else
 
-    printf "${response}\n" >> $resultant_command_history # add command to output history
 
-    cat $filename | eval "$response" | $self # send through stdout to the next command
+    step_one=$(cat $filename | eval "$response")
+    if [ $? -eq 0  ]; then
+      printf "${response}\n" >> $resultant_command_history # add command to output history
+      echo $step_one | $self # send through stdout to the next command
+    else
+      cat $filename | $self
+    fi
   fi
 
 else
