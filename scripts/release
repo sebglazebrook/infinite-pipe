@@ -1,0 +1,14 @@
+#!/bin/bash
+
+version_number="$1"
+
+if [ -z "$version_number" ]; then
+  echo "No version number given. Don't know how to continue"
+  exit 1
+fi
+
+mkdir -p "releases/${version_number}"
+
+tar -czvf infinite-pipe.tar.gz src
+
+mv infinite-pipe.tar.gz "releases/${version_number}"
