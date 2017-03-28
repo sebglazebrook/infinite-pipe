@@ -51,7 +51,7 @@ Infinite pipe let's you pause the stdout chain, think about your next command an
 Just run:
 
 ```
-pipe ps -ef
+infinite-pipe ps -ef
 ```
 
 Now you will see your output and be have a prompt where you can either enter in a new command to act on the output to press enter to quit.
