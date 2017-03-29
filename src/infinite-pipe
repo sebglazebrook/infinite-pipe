@@ -61,10 +61,18 @@ else
     # check if the user want to go back
     if [ "${response}" == "back" ]; then
 
-      # remove last command in output history
-      sed \$d --in-place $resultant_command_history
+      # We can't go back in time more than the first command so only delete
+      # if we have more than 1
+      number_of_lines_in_resultant_command_history="$(wc -l $resultant_command_history | awk '{ print $1 }')"
+      if [ $number_of_lines_in_resultant_command_history -gt 1 ]; then
+
+        # remove last command in output history
+        sed \$d --in-place $resultant_command_history
+
+      fi
 
       rm $filename # delete current stdout
+
       previous_stdout="$(ls -a "${data_dir}"/*.stdout | tail -n 1 )"
       cat $previous_stdout | $self # send through old stdout to pipe
 
