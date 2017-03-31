@@ -8,3 +8,6 @@ rustyline = "*"
 readline  = { git = "https://github.com/shaleh/rust-readline.git"  }
 rl-sys = "*"
 
+[lib]
+name = "pipe"
+path = "src/lib.rs"
