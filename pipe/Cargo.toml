@@ -1,0 +1,10 @@
+[package]
+name = "pipe"
+version = "0.1.0"
+authors = ["seb"]
+
+[dependencies]
+rustyline = "*"
+readline  = { git = "https://github.com/shaleh/rust-readline.git"  }
+rl-sys = "*"
+

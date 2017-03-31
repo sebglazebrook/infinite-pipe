@@ -1,0 +1,15 @@
+data:
+  image: sebglazebrook/rust-nightly
+  volumes:
+    - /root/.cargo/
+    - /root/.bash_history
+  command: ["true"]
+rust:
+  build: .
+  volumes:
+    - .:/code
+    - ${HOME}/.inputrc:/root/.inputrc
+  volumes_from:
+    - data
+  working_dir: /code
+  command: ["bash"]
