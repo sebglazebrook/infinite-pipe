@@ -6,3 +6,5 @@ release:
   command: ./scripts/release
 link-bin:
   command: sudo ln -s "${PWD}/src/infinite-pipe" /usr/local/bin/
+console:
+  command: docker-compose run rust bash
