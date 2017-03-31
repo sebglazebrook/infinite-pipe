@@ -15,12 +15,17 @@ impl InputHandler {
         InputHandler { input: input }
     }
 
-    pub fn handle(&self) {
+    pub fn handle(&self) -> Result<String, String> {
         let output = Command::new(self.command())
             .args(&self.args())
-            .output()
-            .expect("ls command failed to start"); // TODO
-        println!("{}", String::from_utf8_lossy(&output.stdout));
+            .output();
+        match output {
+            Err(error_message) => { Err(String::new()) } // TODO
+            Ok(output) => {
+                let stringed_output = String::from_utf8_lossy(&output.stdout);
+                Ok(stringed_output.into_owned())
+            },
+        }
     }
 
     // private //
@@ -40,21 +45,28 @@ impl InputHandler {
 
 }
 
-struct App;
+struct App {
+    inputs: Vec<String>,
+}
 
 impl App {
 
     pub fn new() -> Self {
-        App {}
+        App { inputs: vec![] }
     }
 
-    pub fn start(&self) -> usize {
+    pub fn start(&mut self) -> usize {
         loop {
             match self.read_input() {
-                Err(error_message) => {},
-                Ok(input) => { InputHandler::new(input).handle(); },
+                Err(error_message) => { break; },
+                Ok(input) => { 
+                    self.inputs.push(input.clone());
+                    match InputHandler::new(input).handle() {
+                        Err(_) => { break; }
+                        Ok(output) => { println!("{}", output); },
+                    }
+                },
             }
-            break;
         }
         0
     }
@@ -73,3 +85,10 @@ impl App {
 fn main() {
     let exit_code = App::new().start();
 }
+
+// handle the resultant_command
+// handle control+c
+// output error messages
+// update readline session history
+// add custom command handling, back, exit
+// update external history
