@@ -1,10 +1,10 @@
 extern crate pipe;
 
-use pipe::App;
+use pipe::AppFactory;
 
 
 fn main() {
-    let exit_code = App::new().start();
+    let exit_code = AppFactory::create().start();
 }
 
 // handle the resultant_command

@@ -4,23 +4,11 @@ pub struct InputHandler {
     input: String,
 }
 
+
 impl InputHandler {
 
     pub fn new(input: String) -> Self {
         InputHandler { input: input }
-    }
-
-    pub fn handle(&self) -> Result<String, String> {
-        let output = Command::new(self.command())
-            .args(&self.args())
-            .output();
-        match output {
-            Err(error_message) => { Err(String::new()) } // TODO
-            Ok(output) => {
-                let stringed_output = String::from_utf8_lossy(&output.stdout);
-                Ok(stringed_output.into_owned())
-            },
-        }
     }
 
     // private //
@@ -40,3 +28,25 @@ impl InputHandler {
 
 }
 
+impl InputHandlerLike for InputHandler {
+
+    fn handle(&self) -> Result<String, String> {
+        let output = Command::new(self.command())
+            .args(&self.args())
+            .output();
+        match output {
+            Err(error_message) => { Err(String::new()) } // TODO
+            Ok(output) => {
+                let stringed_output = String::from_utf8_lossy(&output.stdout);
+                Ok(stringed_output.into_owned())
+            },
+        }
+    }
+
+}
+
+#[derive(Mock)]
+pub trait InputHandlerLike {
+
+    fn handle(&self) -> Result<String, String>;
+}
