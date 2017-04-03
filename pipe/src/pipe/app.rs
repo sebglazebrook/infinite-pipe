@@ -68,8 +68,6 @@ impl App {
     }
 }
 
-
-
 struct InputHandlerDouble;
 
 impl InputHandlerLike for InputHandlerDouble {
