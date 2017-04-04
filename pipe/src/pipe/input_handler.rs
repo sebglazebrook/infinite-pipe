@@ -1,7 +1,7 @@
-use std::process::Command;
+use std::process::{Command, Stdio};
+use std::io::prelude::*;
 
 pub struct InputHandler;
-
 
 impl InputHandler {
 
@@ -28,17 +28,27 @@ impl InputHandler {
 
 impl InputHandlerLike for InputHandler {
 
-    fn handle(&self, input: String) -> Result<String, String> {
-        let output = Command::new(self.command(&input))
+    fn handle(&self, input: String, piped_input: Option<String>) -> Result<String, String> {
+        let process;
+        match Command::new(self.command(&input))
             .args(&self.args(&input))
-            .output();
-        match output {
-            Err(error_message) => { Err(String::new()) } // TODO
-            Ok(output) => {
-                let stringed_output = String::from_utf8_lossy(&output.stdout);
-                Ok(stringed_output.into_owned())
-            },
+            .stdout(Stdio::piped())
+            .stdin(Stdio::piped())
+            .spawn() {
+                Ok(p) => { process = p; }
+                Err(_) => { return Err(String::from("something went wrong")) }
+
+            }
+
+        if piped_input.is_some() {
+            process.stdin.unwrap().write_all(piped_input.unwrap().as_bytes());
         }
+
+
+        let mut output = String::new();
+        process.stdout.unwrap().read_to_string(&mut output);
+
+        Ok(output)
     }
 
 }
@@ -46,5 +56,5 @@ impl InputHandlerLike for InputHandler {
 #[derive(Mock)]
 pub trait InputHandlerLike {
 
-    fn handle(&self, input: String) -> Result<String, String>;
+    fn handle(&self, input: String, piped_input: Option<String>) -> Result<String, String>;
 }

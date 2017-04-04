@@ -17,7 +17,11 @@ impl App {
                 Err(error_message) => { break; },
                 Ok(input) => { 
                     self.inputs.push(input.clone());
-                    match self.input_handler.handle(input) {
+                    let output = match self.outputs.iter().last() {
+                        Some(output) => { Some(output.clone()) },
+                        None => { None },
+                    };
+                    match self.input_handler.handle(input, output) {
                         Err(_) => {
                             self.inputs.pop();
                             break; 
@@ -57,7 +61,7 @@ struct InputHandlerDouble;
 
 impl InputHandlerLike for InputHandlerDouble {
 
-    fn handle(&self, input: String) -> Result<String, String> {
+    fn handle(&self, input: String, piped_input: Option<String>) -> Result<String, String> {
         Ok(String::new())
     }
 }
@@ -106,10 +110,28 @@ mod test {
         assert_eq!(app.external_history.last().unwrap(), "ps -ef | grep docker");
     }
 
-    //#[test]
-    //fn when_there_is_a_successful_command() {
+    #[test]
+    fn when_there_is_a_successful_command_it_sends_through_the_output_to_the_next_command() {
+        let mut scenario = Scenario::new();
+        let mut input_reader_mock = scenario.create_mock_for::<InputReaderLike>();
+        scenario.expect(input_reader_mock.read_line_call("1".to_string()).and_return(Ok(String::from("ps -ef"))));
+        scenario.expect(input_reader_mock.read_line_call("2".to_string()).and_return(Ok(String::from("grep docker"))));
+        scenario.expect(input_reader_mock.read_line_call("3".to_string()).and_return(Err(String::from("An error occurred"))));
         // it renders the output
         // and the user enters in a new command
         // it sends the previous output with the new command for processing
-    //}
+
+        let external_history_double = HistoryDouble { lines: vec![] };
+
+        let mut input_handler_mock = scenario.create_mock_for::<InputHandlerLike>();
+        scenario.expect(input_handler_mock.handle_call("ps -ef".to_string(), None).and_return(Ok(String::from("ps -ef output"))));
+        scenario.expect(input_handler_mock.handle_call("grep docker".to_string(), Some("ps -ef output".to_string())).and_return(Ok(String::from("grep docker output"))));
+        let mut app = AppBuilder::new()
+            .with_readline(input_reader_mock)
+            .with_input_handler(input_handler_mock)
+            .with_external_history(external_history_double)
+            .build();
+
+        app.start();
+    }
 }
