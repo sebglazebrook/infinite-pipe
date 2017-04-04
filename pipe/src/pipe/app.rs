@@ -42,7 +42,7 @@ impl App {
     
     fn read_input(&mut self) -> Result<String, &'static str> {
         let result = self.input_reader.read_line(self.line_index);
-        self.line_index = self.line_index + 1;
+        self.line_index += 1;
         result
     }
 
