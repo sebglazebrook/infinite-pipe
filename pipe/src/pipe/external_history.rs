@@ -44,7 +44,7 @@ mod test {
     use super::*;
     use std::fs::File;
 
-    fn fetch_file_contents(filepath: &'static str) -> String {
+    fn fetch_file_contents<'a>(filepath: &'a str) -> String {
         let mut file = File::open(filepath).unwrap();
         let mut contents = String::new();
         let _ = file.read_to_string(&mut contents);
