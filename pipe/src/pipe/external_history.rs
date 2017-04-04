@@ -3,19 +3,19 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 
-pub struct ExternalHistory {
-    filepath: String,
+pub struct ExternalHistory<'a> {
+    filepath: &'a str,
 }
 
-impl ExternalHistory {
+impl<'a> ExternalHistory<'a> {
 
-    pub fn new(filepath: &'static str) -> Self {
+    pub fn new(filepath: &'a str) -> Self {
         listmgmt::clear();
-        ExternalHistory { filepath: filepath.to_string() }
+        ExternalHistory { filepath: filepath }
     }
 }
 
-impl HistoryLike for ExternalHistory {
+impl<'a> HistoryLike for ExternalHistory<'a> {
 
     fn push(&mut self, command: String) {
         let _ = listmgmt::add(&command);
@@ -63,7 +63,7 @@ mod test {
 
                 before_each {
                     let _ = File::create(history_filepath).unwrap();
-                    let mut external_history = ExternalHistory::new(history_filepath.clone());
+                    let mut external_history = ExternalHistory::new(history_filepath);
                     external_history.push(String::from("ps -ef"));
                 }
 
@@ -78,7 +78,7 @@ mod test {
                 before_each {
                     let mut file = File::create(history_filepath).unwrap();
                     let _ = file.write_all(b"ls -la\n");
-                    let mut external_history = ExternalHistory::new(history_filepath.clone());
+                    let mut external_history = ExternalHistory::new(history_filepath);
                     external_history.push(String::from("ps -ef"));
                 }
 
@@ -94,7 +94,7 @@ mod test {
             before_each {
                 let history_filepath = "/tmp/test-history";
                 let _ = File::create(history_filepath).unwrap();
-                let mut external_history = ExternalHistory::new(history_filepath.clone());
+                let mut external_history = ExternalHistory::new(history_filepath);
             }
 
             describe! when_the_history_is_empty {
