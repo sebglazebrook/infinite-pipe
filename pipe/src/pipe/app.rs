@@ -1,5 +1,5 @@
 use pipe::{InputHandler, InputHandlerLike};
-use pipe::{InputReader, InputReaderLike, HistoryLike, ExternalHistory};
+use pipe::{InputReader, InputReaderLike, HistoryLike};
 
 pub struct App {
     pub inputs: Vec<String>,
@@ -10,10 +10,6 @@ pub struct App {
 }
 
 impl App {
-
-    pub fn new() -> Self {
-        App { inputs: vec![], outputs: vec![], external_history: Box::new(ExternalHistory::new("TODO")), input_reader: Box::new(InputReader::new()), line_index: 1 }
-    }
 
     pub fn start(&mut self) -> usize {
         loop {
@@ -44,11 +40,6 @@ impl App {
         let result = self.input_reader.read_line(self.line_index.to_string());
         self.line_index = self.line_index + 1;
         result
-        //match readline::readline("") {
-            //Ok(Some(command)) => { Ok(command) }
-            //Ok(None) => { Err("die") },  // user entered ctrl-d
-            //Err(e) => { Err("an error occurred") } 
-        //}
     }
 
     fn add_command_to_external_history(&mut self) {
@@ -70,7 +61,6 @@ impl InputHandlerLike for InputHandlerDouble {
         Ok(String::new())
     }
 }
-
 
 struct HistoryDouble {
     lines: Vec<String>,

@@ -32,10 +32,15 @@ impl AppBuilder {
     }
 
     pub fn build(&mut self) -> App {
-        let mut app = App::new();
-        app.input_reader = self.readline.take().unwrap();
-        app.external_history = self.external_history.take().unwrap();
-        app
+        let external_history = self.external_history.take().unwrap();
+        let input_reader = self.readline.take().unwrap();
+        App {
+            inputs: vec![],
+            outputs: vec![],
+            external_history: external_history,
+            input_reader: input_reader,
+            line_index: 1,
+        }
     }
     
 }
