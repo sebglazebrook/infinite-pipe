@@ -47,10 +47,11 @@ impl App {
     }
 
     fn add_command_to_external_history(&mut self) {
-        let mut full_command = self.inputs.iter().fold(String::new(), |acc, ref input| {
-            acc + &input + " | "
-        }).trim_right_matches(" | ").to_string();
-        self.external_history.push(full_command);
+        self.external_history.push(
+            self.inputs.iter().fold(String::new(), |acc, ref input| {
+                acc + &input + " | "
+            }).trim_right_matches(" | ").to_string()
+        );
     }
 }
 
