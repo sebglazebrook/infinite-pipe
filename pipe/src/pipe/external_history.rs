@@ -44,53 +44,76 @@ mod test {
     use super::*;
     use std::fs::File;
 
-    #[test]
-    fn when_a_command_is_pushed_on_it_gets_added_to_the_history() {
-        let history_filepath = "/tmp/test-history";
-        let _ = File::create(history_filepath).unwrap();
-        let mut external_history = ExternalHistory::new(history_filepath.clone());
-        external_history.push(String::from("ps -ef"));
-        let mut file = File::open(history_filepath).unwrap();
+    fn fetch_file_contents(filepath: &'static str) -> String {
+        let mut file = File::open(filepath).unwrap();
         let mut contents = String::new();
         let _ = file.read_to_string(&mut contents);
-        assert_eq!(contents, "ps -ef\n");
+        contents
     }
 
-    #[test]
-    fn when_the_history_already_has_items_new_items_get_appended() {
-        let history_filepath = "/tmp/test-history-two";
-        {
-            let mut file = File::create(history_filepath).unwrap();
-            let _ = file.write_all(b"ls -la\n");
+    describe! stainless {
+
+        before_each  {
+            let history_filepath = "/tmp/test-history";
         }
-        let mut external_history = ExternalHistory::new(history_filepath.clone());
-        external_history.push(String::from("ps -ef"));
 
-        let mut file = File::open(history_filepath).unwrap();
+        describe! push {
 
-        let mut contents = String::new();
-        let _ = file.read_to_string(&mut contents);
-        assert_eq!(contents, "ls -la\nps -ef\n");
-    }
+            describe! when_the_history_file_is_empty {
 
-    #[test]
-    fn when_the_history_has_items_last_returns_the_last_item() {
-        let history_filepath = "/tmp/test-history-three";
-        File::create(history_filepath).unwrap();
+                before_each {
+                    let _ = File::create(history_filepath).unwrap();
+                    let mut external_history = ExternalHistory::new(history_filepath.clone());
+                    external_history.push(String::from("ps -ef"));
+                }
 
-        let mut external_history = ExternalHistory::new(history_filepath.clone());
-        external_history.push(String::from("ps -ef"));
+                it "adds the entry to the history" {
+                    let contents = fetch_file_contents(history_filepath);
+                    assert_eq!(contents, "ps -ef\n");
+                }
+            }
 
-        assert_eq!(external_history.last(), Some(String::from("ps -ef")));
-    }
+            describe! when_the_history_file_has_items {
 
-    #[test]
-    fn when_the_history_has_no_items_last_returns_nothing() {
-        let history_filepath = "/tmp/test-history-four";
-        File::create(history_filepath).unwrap();
+                before_each {
+                    let mut file = File::create(history_filepath).unwrap();
+                    let _ = file.write_all(b"ls -la\n");
+                    let mut external_history = ExternalHistory::new(history_filepath.clone());
+                    external_history.push(String::from("ps -ef"));
+                }
 
-        let external_history = ExternalHistory::new(history_filepath.clone());
+                it "appends the entry to the history" {
+                    let contents = fetch_file_contents(history_filepath);
+                    assert_eq!(contents, "ls -la\nps -ef\n");
+                }
+            }
+        }
 
-        assert_eq!(external_history.last(), None);
+        describe! last {
+
+            before_each {
+                let history_filepath = "/tmp/test-history";
+                let _ = File::create(history_filepath).unwrap();
+                let mut external_history = ExternalHistory::new(history_filepath.clone());
+            }
+
+            describe! when_the_history_is_empty {
+
+                it "returns None" {
+                    assert_eq!(external_history.last(), None);
+                }
+            }
+
+            describe! when_the_history_has_items {
+
+                before_each {
+                    external_history.push(String::from("ps -ef"));
+                }
+
+                it "returns the last item" {
+                    assert_eq!(external_history.last(), Some(String::from("ps -ef")));
+                }
+            }
+        }
     }
 }
