@@ -1,11 +1,5 @@
-use std::cell::Cell;
-
-use pipe::{InputHandler, InputHandlerLike, AppBuilder};
+use pipe::{InputHandler, InputHandlerLike};
 use pipe::{InputReader, InputReaderLike, HistoryLike, ExternalHistory};
-
-use rl_sys::readline;
-use rl_sys::history::listmgmt;
-
 
 pub struct App {
     pub inputs: Vec<String>,
@@ -18,7 +12,7 @@ pub struct App {
 impl App {
 
     pub fn new() -> Self {
-        App { inputs: vec![], outputs: vec![], external_history: Box::new(ExternalHistory::new()), input_reader: Box::new(InputReader::new()), line_index: 1 }
+        App { inputs: vec![], outputs: vec![], external_history: Box::new(ExternalHistory::new("TODO")), input_reader: Box::new(InputReader::new()), line_index: 1 }
     }
 
     pub fn start(&mut self) -> usize {
@@ -99,6 +93,7 @@ impl HistoryLike for HistoryDouble {
 #[cfg(test)]
 mod test {
     use super::*;
+    use pipe::AppBuilder;
     use mockers::Scenario;
 
     #[test]

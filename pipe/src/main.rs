@@ -4,7 +4,7 @@ use pipe::AppFactory;
 
 
 fn main() {
-    let exit_code = AppFactory::create().start();
+    let _ = AppFactory::create().start();
 }
 
 // handle the resultant_command
