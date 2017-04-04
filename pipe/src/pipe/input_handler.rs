@@ -37,7 +37,6 @@ impl InputHandlerLike for InputHandler {
             .spawn() {
                 Ok(p) => { process = p; }
                 Err(_) => { return Err(String::from("something went wrong")) }
-
             }
 
         if piped_input.is_some() {

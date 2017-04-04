@@ -41,7 +41,7 @@ impl App {
     // private //
     
     fn read_input(&mut self) -> Result<String, String> {
-        let result = self.input_reader.read_line(self.line_index.to_string());
+        let result = self.input_reader.read_line(self.line_index);
         self.line_index = self.line_index + 1;
         result
     }
@@ -94,9 +94,9 @@ mod test {
     fn when_there_multiple_successful_commands_it_updates_the_external_history_with_the_equivalent_pipe_command() {
         let mut scenario = Scenario::new();
         let mut cond = scenario.create_mock_for::<InputReaderLike>();
-        scenario.expect(cond.read_line_call("1".to_string()).and_return(Ok(String::from("ps -ef"))));
-        scenario.expect(cond.read_line_call("2".to_string()).and_return(Ok(String::from("grep docker"))));
-        scenario.expect(cond.read_line_call("3".to_string()).and_return(Err(String::from("An error occurred"))));
+        scenario.expect(cond.read_line_call(1).and_return(Ok(String::from("ps -ef"))));
+        scenario.expect(cond.read_line_call(2).and_return(Ok(String::from("grep docker"))));
+        scenario.expect(cond.read_line_call(3).and_return(Err(String::from("An error occurred"))));
 
         let input_handler_double = InputHandlerDouble {};
         let external_history_double = HistoryDouble { lines: vec![] };
@@ -114,9 +114,9 @@ mod test {
     fn when_there_is_a_successful_command_it_sends_through_the_output_to_the_next_command() {
         let mut scenario = Scenario::new();
         let mut input_reader_mock = scenario.create_mock_for::<InputReaderLike>();
-        scenario.expect(input_reader_mock.read_line_call("1".to_string()).and_return(Ok(String::from("ps -ef"))));
-        scenario.expect(input_reader_mock.read_line_call("2".to_string()).and_return(Ok(String::from("grep docker"))));
-        scenario.expect(input_reader_mock.read_line_call("3".to_string()).and_return(Err(String::from("An error occurred"))));
+        scenario.expect(input_reader_mock.read_line_call(1).and_return(Ok(String::from("ps -ef"))));
+        scenario.expect(input_reader_mock.read_line_call(2).and_return(Ok(String::from("grep docker"))));
+        scenario.expect(input_reader_mock.read_line_call(3).and_return(Err(String::from("An error occurred"))));
         // it renders the output
         // and the user enters in a new command
         // it sends the previous output with the new command for processing

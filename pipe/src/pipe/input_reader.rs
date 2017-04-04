@@ -13,8 +13,8 @@ impl InputReader {
 
 impl InputReaderLike for InputReader {
 
-    fn read_line(&self, string: String) -> Result<String, String> {
-        match readline::readline("") {
+    fn read_line(&self, index: usize) -> Result<String, String> {
+        match readline::readline("c:\\> ") {
             Ok(Some(command)) => { Ok(command.to_string()) }
             Ok(None) => { Err("die".to_string()) },  // user entered ctrl-d
             Err(e) => { Err("an error occurred".to_string()) }
@@ -24,7 +24,7 @@ impl InputReaderLike for InputReader {
 
 #[derive(Mock)]
 pub trait InputReaderLike {
-    fn read_line(&self, string: String) -> Result<String, String>;
+    fn read_line(&self, index: usize) -> Result<String, String>;
 }
 
 #[cfg(test)]
