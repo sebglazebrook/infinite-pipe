@@ -40,7 +40,7 @@ impl App {
 
     // private //
     
-    fn read_input(&mut self) -> Result<String, String> {
+    fn read_input(&mut self) -> Result<String, &'static str> {
         let result = self.input_reader.read_line(self.line_index);
         self.line_index = self.line_index + 1;
         result
@@ -96,7 +96,7 @@ mod test {
         let mut cond = scenario.create_mock_for::<InputReaderLike>();
         scenario.expect(cond.read_line_call(1).and_return(Ok(String::from("ps -ef"))));
         scenario.expect(cond.read_line_call(2).and_return(Ok(String::from("grep docker"))));
-        scenario.expect(cond.read_line_call(3).and_return(Err(String::from("An error occurred"))));
+        scenario.expect(cond.read_line_call(3).and_return(Err("An error occurred")));
 
         let input_handler_double = InputHandlerDouble {};
         let external_history_double = HistoryDouble { lines: vec![] };
@@ -116,7 +116,7 @@ mod test {
         let mut input_reader_mock = scenario.create_mock_for::<InputReaderLike>();
         scenario.expect(input_reader_mock.read_line_call(1).and_return(Ok(String::from("ps -ef"))));
         scenario.expect(input_reader_mock.read_line_call(2).and_return(Ok(String::from("grep docker"))));
-        scenario.expect(input_reader_mock.read_line_call(3).and_return(Err(String::from("An error occurred"))));
+        scenario.expect(input_reader_mock.read_line_call(3).and_return(Err("An error occurred")));
         // it renders the output
         // and the user enters in a new command
         // it sends the previous output with the new command for processing
