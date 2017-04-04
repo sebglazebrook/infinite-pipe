@@ -51,7 +51,7 @@ mod test {
         contents
     }
 
-    describe! stainless {
+    describe! external_history {
 
         before_each  {
             let history_filepath = "/tmp/test-history";
