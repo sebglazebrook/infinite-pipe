@@ -54,3 +54,11 @@ mod test {
         }
     }
 }
+//
+    //#[test]
+    //fn it_updates_the_internal_history_after_each_successful_command() {
+    //}
+
+    //#[test]
+    //fn it_updates_the_internal_history_after_each_non_successful_command() {
+    //}

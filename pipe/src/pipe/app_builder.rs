@@ -34,11 +34,13 @@ impl AppBuilder {
     pub fn build(&mut self) -> App {
         let external_history = self.external_history.take().unwrap();
         let input_reader = self.readline.take().unwrap();
+        let input_handler = self.input_handler.take().unwrap();
         App {
             inputs: vec![],
             outputs: vec![],
             external_history: external_history,
             input_reader: input_reader,
+            input_handler: input_handler,
             line_index: 1,
         }
     }

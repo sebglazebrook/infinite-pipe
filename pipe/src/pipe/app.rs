@@ -1,12 +1,12 @@
-use pipe::{InputHandler, InputHandlerLike};
-use pipe::{InputReader, InputReaderLike, HistoryLike};
+use pipe::{InputHandler, InputHandlerLike, InputReaderLike, HistoryLike};
 
 pub struct App {
     pub inputs: Vec<String>,
     pub outputs: Vec<String>,
-    pub external_history: Box<HistoryLike>,
-    pub input_reader: Box<InputReaderLike>,
     pub line_index: usize,
+    pub input_reader: Box<InputReaderLike>,
+    pub external_history: Box<HistoryLike>,
+    pub input_handler: Box<InputHandlerLike>,
 }
 
 impl App {
@@ -17,7 +17,7 @@ impl App {
                 Err(error_message) => { break; },
                 Ok(input) => { 
                     self.inputs.push(input.clone());
-                    match InputHandler::new(input).handle() {
+                    match self.input_handler.handle(input) {
                         Err(_) => {
                             self.inputs.pop();
                             break; 
@@ -57,7 +57,7 @@ struct InputHandlerDouble;
 
 impl InputHandlerLike for InputHandlerDouble {
 
-    fn handle(&self) -> Result<String, String> {
+    fn handle(&self, input: String) -> Result<String, String> {
         Ok(String::new())
     }
 }
@@ -107,41 +107,9 @@ mod test {
     }
 
     //#[test]
-    //fn when_there_are_successful_and_unsuccessful_commands() {
-        //// it updates the external history with only the successful ones
-    //}
-
-    //#[test]
-    //fn it_updates_the_internal_history_after_each_successful_command() {
-    //}
-
-//#[test]
-    //fn it_updates_the_internal_history_after_each_non_successful_command() {
-    //}
-
-//#[test]
-    //fn when_the_users_input_is_control_c() {
-        //// it exists the program
-    //}
-
-//#[test]
-    //fn when_the_users_input_is_exit() {
-        //// it exists the program
-    //}
-
-//#[test]
-    //fn when_there_is_an_erroneous_command() {
-        //// it displays the error output
-    //}
-
-//#[test]
     //fn when_there_is_a_successful_command() {
-
-        //// it renders the output
-    //}
-
-//#[test]
-    //fn when_the_user_enters_back() {
-        //// it uses the old stdout for the next command 
+        // it renders the output
+        // and the user enters in a new command
+        // it sends the previous output with the new command for processing
     //}
 }
