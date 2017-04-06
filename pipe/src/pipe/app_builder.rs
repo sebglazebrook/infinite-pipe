@@ -1,9 +1,10 @@
-use super::{App, HistoryLike, InputReaderLike, InputHandlerLike};
+use super::{App, HistoryLike, InputReaderLike, InputHandlerLike, LoggerLike};
 
 pub struct AppBuilder {
     readline: Option<Box<InputReaderLike>>,
     input_handler: Option<Box<InputHandlerLike>>,
     external_history: Option<Box<HistoryLike>>,
+    logger: Option<Box<LoggerLike>>,
 }
 
 impl AppBuilder {
@@ -13,6 +14,7 @@ impl AppBuilder {
             readline: None,
             input_handler: None,
             external_history: None,
+            logger: None,
         }
     }
 
@@ -31,16 +33,23 @@ impl AppBuilder {
         self
     }
 
+    pub fn with_logger<T:LoggerLike + 'static>(&mut self, logger: T) -> &mut Self {
+        self.logger = Some(Box::new(logger));
+        self
+    }
+
     pub fn build(&mut self) -> App {
         let external_history = self.external_history.take().unwrap();
         let input_reader = self.readline.take().unwrap();
         let input_handler = self.input_handler.take().unwrap();
+        let logger = self.logger.take().unwrap();
         App {
             inputs: vec![],
             outputs: vec![],
             external_history: external_history,
             input_reader: input_reader,
             input_handler: input_handler,
+            logger: logger,
             line_index: 1,
         }
     }

@@ -1,4 +1,4 @@
-use pipe::{InputHandler, InputHandlerLike, InputReaderLike, HistoryLike};
+use pipe::{InputHandler, InputHandlerLike, InputReaderLike, HistoryLike, LoggerLike};
 
 pub struct App {
     pub inputs: Vec<String>,
@@ -7,6 +7,7 @@ pub struct App {
     pub input_reader: Box<InputReaderLike>,
     pub external_history: Box<HistoryLike>,
     pub input_handler: Box<InputHandlerLike>,
+    pub logger: Box<LoggerLike>,
 }
 
 impl App {
@@ -27,7 +28,7 @@ impl App {
                             break; 
                         }
                         Ok(output) => {
-                            println!("{}", output);
+                            self.logger.log(output.clone());
                             self.outputs.push(output);
                         },
                     }
@@ -35,7 +36,7 @@ impl App {
             }
         }
         self.add_command_to_external_history();
-        0
+        0 // TODO return a real error code
     }
 
     // private //
@@ -82,54 +83,73 @@ impl HistoryLike for HistoryDouble {
     }
 }
 
+
 #[cfg(test)]
 mod test {
     use super::*;
     use pipe::AppBuilder;
     use mockers::Scenario;
 
-    #[test]
-    fn when_there_multiple_successful_commands_it_updates_the_external_history_with_the_equivalent_pipe_command() {
-        let mut scenario = Scenario::new();
-        let mut cond = scenario.create_mock_for::<InputReaderLike>();
-        scenario.expect(cond.read_line_call(1).and_return(Ok(String::from("ps -ef"))));
-        scenario.expect(cond.read_line_call(2).and_return(Ok(String::from("grep docker"))));
-        scenario.expect(cond.read_line_call(3).and_return(Err("An error occurred")));
+    struct LoggerDouble;
+    impl LoggerLike for LoggerDouble {
 
-        let input_handler_double = InputHandlerDouble {};
-        let external_history_double = HistoryDouble { lines: vec![] };
-        let mut app = AppBuilder::new()
-            .with_readline(cond)
-            .with_input_handler(input_handler_double)
-            .with_external_history(external_history_double)
-            .build();
-
-        app.start();
-        assert_eq!(app.external_history.last().unwrap(), "ps -ef | grep docker");
+        fn log(&self, content: String) {
+        }
     }
 
-    #[test]
-    fn when_there_is_a_successful_command_it_sends_through_the_output_to_the_next_command() {
-        let mut scenario = Scenario::new();
-        let mut input_reader_mock = scenario.create_mock_for::<InputReaderLike>();
-        scenario.expect(input_reader_mock.read_line_call(1).and_return(Ok(String::from("ps -ef"))));
-        scenario.expect(input_reader_mock.read_line_call(2).and_return(Ok(String::from("grep docker"))));
-        scenario.expect(input_reader_mock.read_line_call(3).and_return(Err("An error occurred")));
-        // it renders the output
-        // and the user enters in a new command
-        // it sends the previous output with the new command for processing
+    describe! start  {
 
-        let external_history_double = HistoryDouble { lines: vec![] };
+        before_each {
+            let mut scenario = Scenario::new();
+            let mut cond = scenario.create_mock_for::<InputReaderLike>();
+            let input_handler_double = InputHandlerDouble {};
+            let external_history_double = HistoryDouble { lines: vec![] };
+            let logger_double = LoggerDouble {};
+        }
 
-        let mut input_handler_mock = scenario.create_mock_for::<InputHandlerLike>();
-        scenario.expect(input_handler_mock.handle_call("ps -ef".to_string(), None).and_return(Ok(String::from("ps -ef output"))));
-        scenario.expect(input_handler_mock.handle_call("grep docker".to_string(), Some("ps -ef output".to_string())).and_return(Ok(String::from("grep docker output"))));
-        let mut app = AppBuilder::new()
-            .with_readline(input_reader_mock)
-            .with_input_handler(input_handler_mock)
-            .with_external_history(external_history_double)
-            .build();
+        describe! when_there_are_multiple_commands {
 
-        app.start();
+            before_each {
+                scenario.expect(cond.read_line_call(1).and_return(Ok(String::from("ps -ef"))));
+                scenario.expect(cond.read_line_call(2).and_return(Ok(String::from("grep docker"))));
+                scenario.expect(cond.read_line_call(3).and_return(Err("An error occurred")));
+            }
+
+            it "updates the external history with the pipe command" {
+                let mut app = AppBuilder::new()
+                    .with_readline(cond)
+                    .with_input_handler(input_handler_double)
+                    .with_external_history(external_history_double)
+                    .with_logger(logger_double)
+                    .build();
+                app.start();
+                assert_eq!(app.external_history.last().unwrap(), "ps -ef | grep docker");
+            }
+
+            it "logs the stdout" {
+                let mut app = AppBuilder::new()
+                    .with_readline(cond)
+                    .with_input_handler(input_handler_double)
+                    .with_external_history(external_history_double)
+                    .with_logger(logger_double)
+                    .build();
+                app.start();
+                assert_eq!(app.external_history.last().unwrap(), "ps -ef | grep docker");
+            }
+
+            it "sends through the output to the next command" {
+                let mut input_handler_mock = scenario.create_mock_for::<InputHandlerLike>();
+                scenario.expect(input_handler_mock.handle_call("ps -ef".to_string(), None).and_return(Ok(String::from("ps -ef output"))));
+                scenario.expect(input_handler_mock.handle_call("grep docker".to_string(), Some("ps -ef output".to_string())).and_return(Ok(String::from("grep docker output"))));
+
+                let mut app = AppBuilder::new()
+                    .with_readline(cond)
+                    .with_input_handler(input_handler_mock)
+                    .with_external_history(external_history_double)
+                    .with_logger(logger_double)
+                    .build();
+                app.start();
+            }
+        }
     }
 }
