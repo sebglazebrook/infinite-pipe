@@ -56,39 +56,39 @@ impl App {
     }
 }
 
-struct InputHandlerDouble;
-
-impl InputHandlerLike for InputHandlerDouble {
-
-    fn handle(&self, input: String, piped_input: Option<String>) -> Result<String, String> {
-        Ok(String::new())
-    }
-}
-
-struct HistoryDouble {
-    lines: Vec<String>,
-}
-
-impl HistoryLike for HistoryDouble {
-
-    fn push(&mut self, command: String) {
-        self.lines.push(command);
-    }
-
-    fn last(&self) -> Option<String> {
-        match self.lines.last() {
-            Some(string) => Some(string.clone().to_string()),
-            None => None,
-        }
-    }
-}
-
-
 #[cfg(test)]
 mod test {
     use super::*;
     use pipe::AppBuilder;
     use mockers::Scenario;
+
+
+    struct InputHandlerDouble;
+
+    impl InputHandlerLike for InputHandlerDouble {
+
+        fn handle(&self, input: String, piped_input: Option<String>) -> Result<String, String> {
+            Ok(String::new())
+        }
+    }
+
+    struct HistoryDouble {
+        lines: Vec<String>,
+    }
+
+    impl HistoryLike for HistoryDouble {
+
+        fn push(&mut self, command: String) {
+            self.lines.push(command);
+        }
+
+        fn last(&self) -> Option<String> {
+            match self.lines.last() {
+                Some(string) => Some(string.clone().to_string()),
+                None => None,
+            }
+        }
+    }
 
     struct LoggerDouble;
     impl LoggerLike for LoggerDouble {
