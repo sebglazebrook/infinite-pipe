@@ -2,7 +2,6 @@ data:
   build: .
   volumes:
     - /root/.cargo/
-    - /root/.bash_history
   command: ["true"]
 rust:
   build: .
