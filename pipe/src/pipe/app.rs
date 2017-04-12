@@ -153,8 +153,7 @@ mod test {
                     .with_logger(logger_double)
                     .build();
                 app.start();
-                // incorrect assertion
-                assert_eq!(app.external_history.last().unwrap(), "ps -ef | grep docker");
+                // TODO assert that the logger gets called with the right message
             }
 
             it "sends through the output to the next command" {
