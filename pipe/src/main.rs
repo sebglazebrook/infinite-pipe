@@ -10,4 +10,3 @@ fn main() {
 // handle control+c
 // output error messages
 // update readline session history
-// add custom command handling, back, exit

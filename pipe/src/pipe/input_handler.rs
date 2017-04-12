@@ -1,6 +1,14 @@
 use std::process::{Command, Stdio};
 use std::io::prelude::*;
 
+pub enum InputResult {
+    Success(String),
+    Error(String),
+    Back,
+    Break,
+    Quit,
+}
+
 pub struct InputHandler;
 
 impl InputHandler {
@@ -28,7 +36,16 @@ impl InputHandler {
 
 impl InputHandlerLike for InputHandler {
 
-    fn handle(&self, input: String, piped_input: Option<String>) -> Result<String, String> {
+    fn handle(&self, input: String, piped_input: Option<String>) -> InputResult {
+        if input == "back" {
+            return InputResult::Back;
+        }
+        if input == "break" {
+            return InputResult::Break;
+        }
+        if input == "exit" || input == "" {
+            return InputResult::Quit;
+        }
         let process;
         match Command::new(self.command(&input))
             .args(&self.args(&input))
@@ -36,7 +53,7 @@ impl InputHandlerLike for InputHandler {
             .stdin(Stdio::piped())
             .spawn() {
                 Ok(p) => { process = p; }
-                Err(_) => { return Err(String::from("something went wrong")) }
+                Err(_) => { return InputResult::Error(String::from("something went wrong")) }
             }
 
         if piped_input.is_some() {
@@ -47,7 +64,7 @@ impl InputHandlerLike for InputHandler {
         let mut output = String::new();
         process.stdout.unwrap().read_to_string(&mut output);
 
-        Ok(output)
+        InputResult::Success(output)
     }
 
 }
@@ -55,5 +72,5 @@ impl InputHandlerLike for InputHandler {
 #[derive(Mock)]
 pub trait InputHandlerLike {
 
-    fn handle(&self, input: String, piped_input: Option<String>) -> Result<String, String>;
+    fn handle(&self, input: String, piped_input: Option<String>) -> InputResult;
 }

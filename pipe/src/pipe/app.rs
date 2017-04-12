@@ -1,4 +1,4 @@
-use pipe::{InputHandler, InputHandlerLike, InputReaderLike, HistoryLike, LoggerLike};
+use pipe::{InputHandler, InputHandlerLike, InputReaderLike, HistoryLike, LoggerLike, InputResult};
 
 pub struct App {
     pub inputs: Vec<String>,
@@ -23,13 +23,32 @@ impl App {
                         None => { None },
                     };
                     match self.input_handler.handle(input, output) {
-                        Err(_) => {
+                        InputResult::Error(_) => {
                             self.inputs.pop();
                             break; 
                         }
-                        Ok(output) => {
+                        InputResult::Success(output) => {
                             self.logger.log(output.clone());
                             self.outputs.push(output);
+                        },
+                        InputResult::Back => {
+                            self.inputs.pop();
+                            self.inputs.pop();
+                            self.outputs.pop();
+                            match self.outputs.iter().last() {
+                                None => {},
+                                Some(output) => {
+                                    println!("{}", output);
+                                }
+                            }
+                        },
+                        InputResult::Break => {
+                            self.inputs.clear();
+                            self.outputs.clear();
+                        },
+                        InputResult::Quit => {
+                            self.inputs.pop();
+                            break;
                         },
                     }
                 },
@@ -67,8 +86,8 @@ mod test {
 
     impl InputHandlerLike for InputHandlerDouble {
 
-        fn handle(&self, input: String, piped_input: Option<String>) -> Result<String, String> {
-            Ok(String::new())
+        fn handle(&self, input: String, piped_input: Option<String>) -> InputResult {
+            InputResult::Success(String::new())
         }
     }
 
@@ -134,13 +153,14 @@ mod test {
                     .with_logger(logger_double)
                     .build();
                 app.start();
+                // incorrect assertion
                 assert_eq!(app.external_history.last().unwrap(), "ps -ef | grep docker");
             }
 
             it "sends through the output to the next command" {
                 let mut input_handler_mock = scenario.create_mock_for::<InputHandlerLike>();
-                scenario.expect(input_handler_mock.handle_call("ps -ef".to_string(), None).and_return(Ok(String::from("ps -ef output"))));
-                scenario.expect(input_handler_mock.handle_call("grep docker".to_string(), Some("ps -ef output".to_string())).and_return(Ok(String::from("grep docker output"))));
+                scenario.expect(input_handler_mock.handle_call("ps -ef".to_string(), None).and_return(InputResult::Success(String::from("ps -ef output"))));
+                scenario.expect(input_handler_mock.handle_call("grep docker".to_string(), Some("ps -ef output".to_string())).and_return(InputResult::Success(String::from("grep docker output"))));
 
                 let mut app = AppBuilder::new()
                     .with_readline(cond)
@@ -149,6 +169,123 @@ mod test {
                     .with_logger(logger_double)
                     .build();
                 app.start();
+            }
+        }
+
+        describe! when_the_user_wants_to_go_back_in_the_pipe {
+
+            before_each {
+                scenario.expect(cond.read_line_call(1).and_return(Ok(String::from("ps -ef"))));
+                scenario.expect(cond.read_line_call(2).and_return(Ok(String::from("grep docker"))));
+                scenario.expect(cond.read_line_call(3).and_return(Ok(String::from("back"))));
+                scenario.expect(cond.read_line_call(4).and_return(Ok(String::from("grep rails"))));
+                scenario.expect(cond.read_line_call(5).and_return(Err("An error occurred")));
+            }
+
+            it "sends the previous stdout output to the next command" {
+                let mut input_handler_mock = scenario.create_mock_for::<InputHandlerLike>();
+                scenario.expect(input_handler_mock.handle_call("ps -ef".to_string(), None).and_return(InputResult::Success(String::from("ps -ef output"))));
+                scenario.expect(input_handler_mock.handle_call("grep docker".to_string(), Some("ps -ef output".to_string())).and_return(InputResult::Success(String::from("grep docker output"))));
+                scenario.expect(input_handler_mock.handle_call("back".to_string(), Some("grep docker output".to_string())).and_return(InputResult::Back));
+                scenario.expect(input_handler_mock.handle_call("grep rails".to_string(), Some("ps -ef output".to_string())).and_return(InputResult::Success(String::from("grep docker output"))));
+                let mut app = AppBuilder::new()
+                    .with_readline(cond)
+                    .with_input_handler(input_handler_mock)
+                    .with_external_history(external_history_double)
+                    .with_logger(logger_double)
+                    .build();
+                app.start();
+            }
+
+            it "does not save the `back` command to the final history" {
+                let mut input_handler_mock = scenario.create_mock_for::<InputHandlerLike>();
+                scenario.expect(input_handler_mock.handle_call("ps -ef".to_string(), None).and_return(InputResult::Success(String::from("ps -ef output"))));
+                scenario.expect(input_handler_mock.handle_call("grep docker".to_string(), Some("ps -ef output".to_string())).and_return(InputResult::Success(String::from("grep docker output"))));
+                scenario.expect(input_handler_mock.handle_call("back".to_string(), Some("grep docker output".to_string())).and_return(InputResult::Back));
+                scenario.expect(input_handler_mock.handle_call("grep rails".to_string(), Some("ps -ef output".to_string())).and_return(InputResult::Success(String::from("grep docker output"))));
+
+                let mut app = AppBuilder::new()
+                    .with_readline(cond)
+                    .with_input_handler(input_handler_mock)
+                    .with_external_history(external_history_double)
+                    .with_logger(logger_double)
+                    .build();
+                app.start();
+                assert_eq!(app.external_history.last().unwrap(), "ps -ef | grep rails");
+            }
+        }
+
+        describe! when_the_user_wants_to_break_the_pipe {
+
+            before_each {
+                scenario.expect(cond.read_line_call(1).and_return(Ok(String::from("ps -ef"))));
+                scenario.expect(cond.read_line_call(2).and_return(Ok(String::from("break"))));
+                scenario.expect(cond.read_line_call(3).and_return(Ok(String::from("grep docker"))));
+                scenario.expect(cond.read_line_call(4).and_return(Err("An error occurred")));
+            }
+
+            it "does not send the stdout to the next command" {
+                let mut input_handler_mock = scenario.create_mock_for::<InputHandlerLike>();
+                scenario.expect(input_handler_mock.handle_call("ps -ef".to_string(), None).and_return(InputResult::Success(String::from("ps -ef output"))));
+                scenario.expect(input_handler_mock.handle_call("break".to_string(), Some("ps -ef output".to_string())).and_return(InputResult::Break));
+                scenario.expect(input_handler_mock.handle_call("grep docker".to_string(), None).and_return(InputResult::Success(String::from("grep docker output"))));
+                let mut app = AppBuilder::new()
+                    .with_readline(cond)
+                    .with_input_handler(input_handler_mock)
+                    .with_external_history(external_history_double)
+                    .with_logger(logger_double)
+                    .build();
+                app.start();
+            }
+
+            it "add the `post break` command to the external history only" {
+                let mut input_handler_mock = scenario.create_mock_for::<InputHandlerLike>();
+                scenario.expect(input_handler_mock.handle_call("ps -ef".to_string(), None).and_return(InputResult::Success(String::from("ps -ef output"))));
+                scenario.expect(input_handler_mock.handle_call("break".to_string(), Some("ps -ef output".to_string())).and_return(InputResult::Break));
+                scenario.expect(input_handler_mock.handle_call("grep docker".to_string(), None).and_return(InputResult::Success(String::from("grep docker output"))));
+                let mut app = AppBuilder::new()
+                    .with_readline(cond)
+                    .with_input_handler(input_handler_mock)
+                    .with_external_history(external_history_double)
+                    .with_logger(logger_double)
+                    .build();
+                app.start();
+                assert_eq!(app.external_history.last().unwrap(), "grep docker");
+            }
+        }
+
+        describe! when_the_user_wants_to_exit {
+
+            before_each {
+                scenario.expect(cond.read_line_call(1).and_return(Ok(String::from("ps -ef"))));
+                scenario.expect(cond.read_line_call(2).and_return(Ok(String::from("exit"))));
+            }
+
+            it "does NOT ask the user for more input" {
+                let mut input_handler_mock = scenario.create_mock_for::<InputHandlerLike>();
+                scenario.expect(input_handler_mock.handle_call("ps -ef".to_string(), None).and_return(InputResult::Success(String::from("ps -ef output"))));
+                scenario.expect(input_handler_mock.handle_call("exit".to_string(), Some("ps -ef output".to_string())).and_return(InputResult::Quit));
+                let mut app = AppBuilder::new()
+                    .with_readline(cond)
+                    .with_input_handler(input_handler_mock)
+                    .with_external_history(external_history_double)
+                    .with_logger(logger_double)
+                    .build();
+                app.start();
+            }
+
+            it "saves the built up command to the users history" {
+                let mut input_handler_mock = scenario.create_mock_for::<InputHandlerLike>();
+                scenario.expect(input_handler_mock.handle_call("ps -ef".to_string(), None).and_return(InputResult::Success(String::from("ps -ef output"))));
+                scenario.expect(input_handler_mock.handle_call("exit".to_string(), Some("ps -ef output".to_string())).and_return(InputResult::Quit));
+                let mut app = AppBuilder::new()
+                    .with_readline(cond)
+                    .with_input_handler(input_handler_mock)
+                    .with_external_history(external_history_double)
+                    .with_logger(logger_double)
+                    .build();
+                app.start();
+                assert_eq!(app.external_history.last().unwrap(), "ps -ef");
             }
         }
     }
