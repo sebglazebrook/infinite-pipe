@@ -1,9 +1,9 @@
-use super::{App, HistoryLike, InputReaderLike, CommandRunner};
+use super::{App, HistoryLike, InputReaderLike, CommandRunnerLike};
 
 pub struct AppBuilder {
     readline: Option<Box<InputReaderLike>>,
     external_history: Option<Box<HistoryLike>>,
-    command_runner: Option<Box<CommandRunner>>,
+    command_runner: Option<Box<CommandRunnerLike>>,
 }
 
 impl AppBuilder {
@@ -26,7 +26,7 @@ impl AppBuilder {
         self
     }
 
-    pub fn with_command_runner(&mut self, command_runner: CommandRunner) -> &mut Self {
+    pub fn with_command_runner<T:CommandRunnerLike+ 'static>(&mut self, command_runner: T) -> &mut Self {
         self.command_runner = Some(Box::new(command_runner));
         self
     }

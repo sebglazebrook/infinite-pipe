@@ -15,5 +15,5 @@ pub use self::app_factory::AppFactory;
 pub use self::input_handler::{InputHandler, InputHandlerLike, InputResult};
 pub use self::input_reader::{InputReader, InputReaderLike};
 pub use self::external_history::{ExternalHistory, HistoryLike};
-pub use self::command_runner::{CommandRunner, CommandResponse};
+pub use self::command_runner::{CommandRunner, CommandResponse, CommandRunnerLike};
 pub use self::command_runner_factory::CommandRunnerFactory;
