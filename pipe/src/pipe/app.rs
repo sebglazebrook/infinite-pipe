@@ -1,13 +1,10 @@
-use pipe::{InputHandler, InputHandlerLike, InputReaderLike, HistoryLike, LoggerLike, InputResult};
+use pipe::{InputHandlerLike, InputReaderLike, HistoryLike, LoggerLike, InputResult, CommandRunner,  StdoutLogger, CommandResponse};
 
 pub struct App {
-    pub inputs: Vec<String>,
-    pub outputs: Vec<String>,
     pub line_index: usize,
     pub input_reader: Box<InputReaderLike>,
     pub external_history: Box<HistoryLike>,
-    pub input_handler: Box<InputHandlerLike>,
-    pub logger: Box<LoggerLike>,
+    pub command_runner: Box<CommandRunner>,
 }
 
 impl App {
@@ -17,44 +14,14 @@ impl App {
             match self.read_input() {
                 Err(error_message) => { break; },
                 Ok(input) => { 
-                    self.inputs.push(input.clone());
-                    let output = match self.outputs.iter().last() {
-                        Some(output) => { Some(output.clone()) },
-                        None => { None },
-                    };
-                    match self.input_handler.handle(input, output) {
-                        InputResult::Error(_) => {
-                            self.inputs.pop();
-                            break; 
-                        }
-                        InputResult::Success(output) => {
-                            self.logger.log(output.clone());
-                            self.outputs.push(output);
-                        },
-                        InputResult::Back => {
-                            self.inputs.pop();
-                            self.inputs.pop();
-                            self.outputs.pop();
-                            match self.outputs.iter().last() {
-                                None => {},
-                                Some(output) => {
-                                    println!("{}", output);
-                                }
-                            }
-                        },
-                        InputResult::Break => {
-                            self.inputs.clear();
-                            self.outputs.clear();
-                        },
-                        InputResult::Quit => {
-                            self.inputs.pop();
-                            break;
-                        },
+                    match self.command_runner.next_command(input) {
+                        CommandResponse::Exit => { break; }
+                        _ => {  }
                     }
-                },
+                }
             }
         }
-        self.add_command_to_external_history();
+        self.external_history.push(self.command_runner.resultant_command());
         0 // TODO return a real error code
     }
 
@@ -64,14 +31,6 @@ impl App {
         let result = self.input_reader.read_line(self.line_index);
         self.line_index += 1;
         result
-    }
-
-    fn add_command_to_external_history(&mut self) {
-        self.external_history.push(
-            self.inputs.iter().fold(String::new(), |acc, ref input| {
-                acc + &input + " | "
-            }).trim_right_matches(" | ").to_string()
-        );
     }
 }
 

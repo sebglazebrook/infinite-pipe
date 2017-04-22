@@ -1,10 +1,9 @@
-use super::{App, HistoryLike, InputReaderLike, InputHandlerLike, LoggerLike};
+use super::{App, HistoryLike, InputReaderLike, CommandRunner};
 
 pub struct AppBuilder {
     readline: Option<Box<InputReaderLike>>,
-    input_handler: Option<Box<InputHandlerLike>>,
     external_history: Option<Box<HistoryLike>>,
-    logger: Option<Box<LoggerLike>>,
+    command_runner: Option<Box<CommandRunner>>,
 }
 
 impl AppBuilder {
@@ -12,9 +11,8 @@ impl AppBuilder {
     pub fn new() -> Self {
         AppBuilder { 
             readline: None,
-            input_handler: None,
             external_history: None,
-            logger: None,
+            command_runner: None,
         }
     }
 
@@ -23,33 +21,24 @@ impl AppBuilder {
         self
     }
 
-    pub fn with_input_handler<T:InputHandlerLike  + 'static>(&mut self, input_handler: T) -> &mut Self {
-        self.input_handler = Some(Box::new(input_handler));
-        self
-    }
-
     pub fn with_external_history<T:HistoryLike + 'static>(&mut self, external_history: T) -> &mut Self {
         self.external_history = Some(Box::new(external_history));
         self
     }
 
-    pub fn with_logger<T:LoggerLike + 'static>(&mut self, logger: T) -> &mut Self {
-        self.logger = Some(Box::new(logger));
+    pub fn with_command_runner(&mut self, command_runner: CommandRunner) -> &mut Self {
+        self.command_runner = Some(Box::new(command_runner));
         self
     }
 
     pub fn build(&mut self) -> App {
         let external_history = self.external_history.take().unwrap();
         let input_reader = self.readline.take().unwrap();
-        let input_handler = self.input_handler.take().unwrap();
-        let logger = self.logger.take().unwrap();
+        let command_runner = self.command_runner.take().unwrap();
         App {
-            inputs: vec![],
-            outputs: vec![],
             external_history: external_history,
             input_reader: input_reader,
-            input_handler: input_handler,
-            logger: logger,
+            command_runner: command_runner,
             line_index: 1,
         }
     }
