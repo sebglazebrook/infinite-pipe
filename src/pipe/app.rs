@@ -1,4 +1,4 @@
-use pipe::{InputReaderLike, HistoryLike, CommandRunnerLike, CommandResponse};
+use pipe::{InputReaderLike, HistoryLike, CommandRunnerLike, CommandResponse, StderrLogger, LoggerLike};
 
 pub struct App {
     pub line_index: usize,
@@ -14,6 +14,7 @@ impl App {
         loop {
             match self.read_input() {
                 Err(error_message) => {
+                    StderrLogger::new().log(error_message.to_string());
                     exit_code = 1;
                     break;
                 },
