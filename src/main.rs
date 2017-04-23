@@ -9,5 +9,4 @@ fn main() {
     process::exit(exit_code);
 }
 
-// output error messages
 // update readline session history
