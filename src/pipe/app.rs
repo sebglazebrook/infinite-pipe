@@ -9,10 +9,14 @@ pub struct App {
 
 impl App {
 
-    pub fn start(&mut self) -> usize {
+    pub fn start(&mut self) -> i32 {
+        let mut exit_code = 0;
         loop {
             match self.read_input() {
-                Err(error_message) => { break; },
+                Err(error_message) => {
+                    exit_code = 1;
+                    break;
+                },
                 Ok(input) => { 
                     match self.command_runner.next_command(input) {
                         CommandResponse::Exit => { break; }
@@ -22,7 +26,7 @@ impl App {
             }
         }
         self.external_history.push(self.command_runner.resultant_command());
-        0 // TODO return a real error code
+        exit_code
     }
 
     // private //
