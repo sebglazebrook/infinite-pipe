@@ -6,3 +6,5 @@ release:
   command: ./scripts/release
 console:
   command: docker-compose run rust bash
+build-debug:
+  command: docker-compose run rust cargo build
