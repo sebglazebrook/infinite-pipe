@@ -17,7 +17,7 @@ impl InputReaderLike for InputReader {
         match readline::readline("c:\\> ") {
             Ok(Some(command)) => { Ok(command.to_string()) }
             Ok(None) => { Err("die") },  // user entered ctrl-d
-            Err(e) => { Err("an error occurred") }
+            Err(_) => { Err("an error occurred") }
         }
     }
 }

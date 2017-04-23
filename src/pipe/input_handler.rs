@@ -57,12 +57,12 @@ impl InputHandlerLike for InputHandler {
             }
 
         if piped_input.is_some() {
-            process.stdin.unwrap().write_all(piped_input.unwrap().as_bytes());
+            let _ = process.stdin.unwrap().write_all(piped_input.unwrap().as_bytes());
         }
 
 
         let mut output = String::new();
-        process.stdout.unwrap().read_to_string(&mut output);
+        let _ = process.stdout.unwrap().read_to_string(&mut output);
 
         InputResult::Success(output)
     }
