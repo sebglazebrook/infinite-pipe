@@ -8,3 +8,5 @@ console:
   command: docker-compose run rust bash
 build-debug:
   command: docker-compose run rust cargo build
+build-release:
+  command: docker-compose run rust cargo build --release
