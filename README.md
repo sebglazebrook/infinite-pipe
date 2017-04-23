@@ -60,5 +60,4 @@ Easy!
 
 ## TODO
 
-- Make sure large data piped through does not make the program slow
 - Use the user's PS1/PS2 to make the prompt more bash like
